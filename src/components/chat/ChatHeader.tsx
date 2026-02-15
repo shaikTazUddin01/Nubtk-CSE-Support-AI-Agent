@@ -21,7 +21,7 @@ const ChatHeader = ({ onMenuClick }: ChatHeaderProps) => {
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <span className="font-semibold text-foreground">
-              NUBTK CSE Student Support
+              NUBTK CSE
             </span>
           </div>
         </div>
