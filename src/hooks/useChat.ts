@@ -4,22 +4,25 @@ import { toast } from "sonner";
 export interface Message {
   id: string;
   role: "user" | "assistant";
-  content: string;
+  content?: string;
+  image?: string;
   timestamp: Date;
 }
 
-// Demo webhook URL - replace with your actual n8n webhook URL
-const WEBHOOK_URL = "https://demo.webhook.site/test"; // Placeholder for demo
+const WEBHOOK_URL = "https://itsheba.app.n8n.cloud/webhook/95dd458a-f44e-4949-87e0-e9fb24b18b95";
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content?: string, file?: File) => {
+    if (!content && !file) return;
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content,
+      content: content || "",
+      image: file ? URL.createObjectURL(file) : undefined,
       timestamp: new Date(),
     };
 
@@ -27,28 +30,28 @@ export const useChat = () => {
     setIsLoading(true);
 
     try {
-      // For demo purposes, we'll simulate a response
-      // In production, this would call your n8n webhook
+      const formData = new FormData();
+
+      if (content) formData.append("message", content);
+      if (file) formData.append("image", file);
+
+      formData.append("timestamp", new Date().toISOString());
+
       const response = await fetch(WEBHOOK_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: content,
-          timestamp: new Date().toISOString(),
-        }),
+        body: formData,
       }).catch(() => null);
 
-      // If webhook fails or is demo, simulate a response
-      let assistantContent: string;
-      
+      let assistantContent = "";
+
       if (response?.ok) {
         const data = await response.json();
-        assistantContent = data.response || data.message || "I received your message!";
+        assistantContent =
+          data.response ||
+          data.message ||
+          "I received your request.";
       } else {
-        // Demo response when webhook is not configured
-        assistantContent = generateDemoResponse(content);
+        assistantContent = generateDemoResponse(content || "", !!file);
       }
 
       const assistantMessage: Message = {
@@ -60,16 +63,16 @@ export const useChat = () => {
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("Failed to send message. Please try again.");
-      
-      // Still add a fallback response for demo
+      console.error(error);
+      toast.error("Server connection failed");
+
       const fallbackMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "I'm having trouble connecting to the server. Please check your webhook configuration.",
+        content: generateDemoResponse(content || "", !!file),
         timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, fallbackMessage]);
     } finally {
       setIsLoading(false);
@@ -88,29 +91,47 @@ export const useChat = () => {
   };
 };
 
-// Demo response generator for testing without a real webhook
-function generateDemoResponse(input: string): string {
-  const lowerInput = input.toLowerCase();
-  
-  if (lowerInput.includes("hello") || lowerInput.includes("hi")) {
-    return "Hello! 👋 How can I help you today? I'm connected to your n8n workflow and ready to assist.";
+
+// Basic demo replies
+function generateDemoResponse(input: string, hasImage: boolean): string {
+
+  const lower = input.toLowerCase();
+
+  if (hasImage && input) {
+    return `🖼 I received your image and question.
+
+Your question: "${input}"
+
+To analyze images, connect your n8n workflow with Gemini Vision API.`;
   }
-  
-  if (lowerInput.includes("image") || lowerInput.includes("create")) {
-    return "I'd love to help you create something! To generate images, you'll need to configure your n8n workflow with an image generation node. What would you like to create?";
+
+  if (hasImage) {
+    return "🖼 I received your image. Connect Gemini Vision in n8n to analyze it.";
   }
-  
-  if (lowerInput.includes("write") || lowerInput.includes("help me write")) {
-    return "I'm here to help you write! What would you like to work on? I can help with:\n\n• Blog posts and articles\n• Creative writing\n• Professional emails\n• Documentation\n• And much more!";
+
+  if (lower.includes("hello") || lower.includes("hi")) {
+    return "Hello! 👋 How can I help you today?";
   }
-  
-  if (lowerInput.includes("learn")) {
-    return "Learning is wonderful! 📚 What topic interests you? I can help explain concepts, provide resources, or create a learning plan tailored to your goals.";
+
+  if (lower.includes("image")) {
+    return "You can upload an image and ask questions about it.";
   }
-  
-  if (lowerInput.includes("boost") || lowerInput.includes("motivation")) {
-    return "Here's a boost for you! ✨\n\n\"Every expert was once a beginner. Keep pushing forward!\"\n\nWould you like some productivity tips or perhaps a creative challenge to spark your day?";
+
+  if (lower.includes("help")) {
+    return "Sure! Tell me what you need help with.";
   }
-  
-  return `Thanks for your message! 🚀\n\nI received: "${input}"\n\nThis is a demo response. To connect your n8n workflow:\n1. Update the WEBHOOK_URL in useChat.ts\n2. Set your n8n webhook to receive POST requests\n3. Return a JSON with a "response" or "message" field`;
+
+  if (lower.includes("learn")) {
+    return "Learning is great! What topic do you want to learn?";
+  }
+
+  if (lower.includes("motivation")) {
+    return "✨ Stay motivated! Every expert was once a beginner.";
+  }
+
+  return `Thanks for your message!
+
+You said: "${input}"
+
+This is a demo response. Connect your n8n webhook to enable AI responses.`;
 }

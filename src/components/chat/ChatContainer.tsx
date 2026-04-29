@@ -16,48 +16,47 @@ const ChatContainer = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex h-screen flex-col bg-background">
       <ChatHeader />
-      
-      <main className="flex-1 overflow-hidden flex flex-col">
+
+      <main className="flex flex-1 flex-col overflow-hidden">
         {hasMessages ? (
           <div className="flex-1 overflow-y-auto scrollbar-hide px-4 py-6">
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div className="mx-auto max-w-3xl space-y-6">
               {messages.map((message) => (
                 <ChatMessage
                   key={message.id}
                   role={message.role}
                   content={message.content}
+                  image={message.image}
                 />
               ))}
-              {isLoading && (
-                <ChatMessage role="assistant" content="" isLoading />
-              )}
+
+              {isLoading && <ChatMessage role="assistant" isLoading />}
+
               <div ref={messagesEndRef} />
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center px-4">
+          <div className="flex flex-1 items-center justify-center px-4">
             <WelcomeScreen />
           </div>
         )}
-        
+
         <div className="px-4 pb-6 pt-4">
-          <div className="max-w-3xl mx-auto space-y-4">
+          <div className="mx-auto max-w-3xl space-y-4">
             <ChatInput
               onSend={sendMessage}
               isLoading={isLoading}
               placeholder="Ask anything..."
             />
-            
-            {!hasMessages && (
-              <QuickChips onChipClick={sendMessage} />
-            )}
+
+            {!hasMessages && <QuickChips onChipClick={(text) => sendMessage(text)} />}
           </div>
         </div>
       </main>
