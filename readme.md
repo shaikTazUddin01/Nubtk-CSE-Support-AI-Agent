@@ -4,7 +4,7 @@ NUBTK CSE Student Support AI Agent
 ### Project Duration : 4 Weeks
 
 ### Project Objective
-The objective of this project is to design and develop an AI-based Student Support System for the Department of Computer Science and Engineering (CSE) at NUBTK.  
+The *NUBTK CSE Student Support AI Agent* is an AI-based Student Support System for the Department of Computer Science and Engineering (CSE) at NUBTK.  
 The system will assist students by answering academic-related queries such as course information, class routines, semester details, and general academic guidelines using Artificial Intelligence.
 
 ---
